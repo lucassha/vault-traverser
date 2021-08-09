@@ -31,19 +31,61 @@ func NewVaultClient(engine string) (*VaultClient, error) {
 	}, nil
 }
 
+// SearchPath loops over a given Vault path and searches for the secret
+// inside this path.
 func (v *VaultClient) SearchPath(path, secret string) error {
 	return nil
 }
 
-func (v *VaultClient) ReadSecret(endpoint string) ([]string, error) {
+// readSecret connects to the Vault cluster and reads a specific endpoint
+func (v *VaultClient) readSecret(endpoint string) ([]string, error) {
 	return []string{}, nil
 }
 
-func (v *VaultClient) ListSecret(path string) ([]string, error) {
+// listSecret connects to the Vault cluster and lists all secrets at
+// a designated path
+func (v *VaultClient) listSecret(path string) ([]string, error) {
 	return []string{}, nil
 }
 
-func fullPath(p, q string) string {
+// mutateListSecretsApiPath mutates the api string due to Vault having multiple
+// kv versions of their api. For kv v2, "/metadata" must be added to the path.
+// "vault kv list secret" is the equivalent to LIST /secret/metadata
+// https://www.vaultproject.io/api/secret/kv/kv-v2.html#list-secrets
+func mutateListSecretsAPIPath(path string) string {
+	fwdSlashIndex := strings.Index(path, "/")
+	// forward slash as the first character is not required to read from vault
+	// remove the first slash, if present
+	if isPrepended(fwdSlashIndex) {
+		path = path[1:]
+		fwdSlashIndex = strings.Index(path, "/")
+	}
+
+	if fwdSlashIndex > -1 {
+		return path[0:fwdSlashIndex] + "/metadata" + path[fwdSlashIndex:]
+	}
+	// no "/" appended to path. thus, the root path was already passed in
+	return path + "/metadata"
+}
+
+// mutateReadSecretApiPath mutates the api string due to Vault having multiple
+// versions of their api. For kv v2, "/data" must be added to the path.
+// "vault kv get [path/to/secret]" is the equivalent to GET /path/data/to/secret
+func mutateReadSecretAPIPath(endpoint string) string {
+	fwdSlashIndex := strings.Index(endpoint, "/")
+	// not error checking for an empty value, as cobra in root.go does not allow
+	// for an empty secret
+	return endpoint[0:fwdSlashIndex] + "/data" + endpoint[fwdSlashIndex:]
+}
+
+// isPrepended returns true if the index passed in is 0
+func isPrepended(val int) bool {
+	return val == 0
+}
+
+// fullPath combines two strings to form a full path for the listSecret
+// search functionality
+func _fullPath(p, q string) string {
 	if strings.HasSuffix(p, "/") {
 		return p + q
 	}
