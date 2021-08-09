@@ -6,6 +6,11 @@ import (
 	"github.com/hashicorp/vault/api"
 )
 
+const (
+	data = "data"
+	keys = "keys"
+)
+
 // VaultClient is used to connect to the Vault API
 // and stores a k/v engine version (either v1 or v2)
 type VaultClient struct {
@@ -39,13 +44,41 @@ func (v *VaultClient) SearchPath(path, secret string) error {
 
 // readSecret connects to the Vault cluster and reads a specific endpoint
 func (v *VaultClient) readSecret(endpoint string) ([]string, error) {
-	return []string{}, nil
+	if v.kvEngine == "v2" {
+		endpoint = mutateReadSecretAPIPath(endpoint)
+	}
+
+	secret, err := v.client.Logical().Read(endpoint)
+	if err != nil {
+		return []string{}, err
+	}
+
+	list := []string{}
+	for _, v := range secret.Data[data].(map[string]interface{}) {
+		list = append(list, v.(string))
+	}
+
+	return list, nil
 }
 
 // listSecret connects to the Vault cluster and lists all secrets at
 // a designated path
 func (v *VaultClient) listSecret(path string) ([]string, error) {
-	return []string{}, nil
+	if v.kvEngine == "v2" {
+		path = mutateListSecretsAPIPath(path)
+	}
+
+	secret, err := v.client.Logical().List(path)
+	if err != nil {
+		return []string{}, err
+	}
+
+	list := []string{}
+	for _, v := range secret.Data[keys].([]interface{}) {
+		list = append(list, v.(string))
+	}
+
+	return list, nil
 }
 
 // mutateListSecretsApiPath mutates the api string due to Vault having multiple
