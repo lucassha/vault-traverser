@@ -1,70 +1,51 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-var cfgFile string
+type flagOptions struct {
+	path   string
+	secret string
+	engine string
+}
+
+var traverseFlag flagOptions
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "vault-traverser",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Use:   "traverse",
+	Short: "Traverse a Vault path to determine if a secret exists in the given path",
+	Long: `Traverse allows you to search an entire Vault path(s) to search for hidden keys.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+By default, traverse searches the 'secret' path.
+
+Example:
+
+# search the secret/ path for the secret "AKIA-123ASLDFD"
+traverse --secret AKIA-123ASLDFD
+
+# search the containers/teams path for the secret "AKIA-123ASLDFD"
+traverse --path containers/teams --secret AKIA-123ASLDFD
+`,
+	RunE: traverse,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	cobra.CheckErr(rootCmd.Execute())
 }
 
-func init() {
-	cobra.OnInitialize(initConfig)
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.vault-traverser.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func traverse(cmd *cobra.Command, args []string) error {
+	return nil
 }
 
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
+func init() {
+	rootCmd.AddCommand(versionCmd)
 
-		// Search config in home directory with name ".vault-traverser" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".vault-traverser")
-	}
+	rootCmd.PersistentFlags().StringVarP(&traverseFlag.path, "path", "p", "/secret", "Vault path to search for a secret")
+	rootCmd.PersistentFlags().StringVarP(&traverseFlag.path, "engine", "e", "v2", "K/V secrets engine. Use KV v1 for < 0.10 Vault")
+	rootCmd.PersistentFlags().StringVarP(&traverseFlag.path, "secret", "s", "", "Secret key to search for")
 
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
-	}
+	rootCmd.MarkFlagRequired("secret")
 }
