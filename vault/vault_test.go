@@ -1,6 +1,7 @@
 package vault
 
 import (
+	"reflect"
 	"testing"
 
 	kv "github.com/hashicorp/vault-plugin-secrets-kv"
@@ -90,6 +91,8 @@ func createTestVault(t testing.TB) *hashivault.TestCluster {
 	return cluster
 }
 
+// TestReadSecret creates a new test Vault cluster, writes secrets to paths, and
+// then confirms the readSecret method for VaultClient is parsing these properly
 func TestReadSecret(t *testing.T) {
 	cluster := createTestVault(t)
 	defer cluster.Cleanup()
@@ -125,26 +128,85 @@ func TestReadSecret(t *testing.T) {
 	}
 
 	testTable := []struct {
-		name     string
-		endpoint string
-		key      string
-		want     []string
+		name       string
+		endpoint   string
+		key        string
+		want       []string
+		vaultError error
 	}{
-		{"test case 0", "test/test0", "test_0_key", []string{"test_0_data"}},
-		{"test case 0", "test/test123", "test_0_key", []string{"test_0_data"}},
+		{"find a k/v match", "test/test0", "test_0_key", []string{"test_0_data"}, nil},
+		{"do not find a secret", "test/test123", "test_0_key", []string{"test_0_data"}, ErrSecretNotFound},
 	}
 
 	for _, tc := range testTable {
 		t.Run(tc.name, func(t *testing.T) {
 			secrets, err := vc.readSecret(tc.endpoint)
-			if err != nil {
+			if err != tc.vaultError {
 				t.Fatal(err)
 			}
 
 			for i := 0; i < len(secrets); i++ {
 				if secrets[i] != tc.want[i] {
-					t.Errorf("got %s but wanted %s", secrets[i], tc.want[i])
+					assert.Equal(t, tc.want[i], secrets[i])
 				}
+			}
+		})
+	}
+}
+
+func TestListSecret(t *testing.T) {
+	cluster := createTestVault(t)
+	defer cluster.Cleanup()
+	vaultClient := cluster.Cores[0].Client // only need a client from 1 of 3 clusters
+
+	// instead of using NewVaultClient(engine string) constructor,
+	// pass in the test client into the VaultClient struct
+	vc := &VaultClient{
+		client:   vaultClient,
+		kvEngine: "v2",
+	}
+
+	// write sample data into vault
+	testData := []struct {
+		path  string
+		key   string
+		value string
+	}{
+		{"test/data/test0", "test_0_key", "test_0_data"},
+		{"test/data/test1", "test_1_key", "test_1_data"},
+		{"test/data/test2", "test_2_key", "test_2_data"},
+	}
+
+	for _, v := range testData {
+		_, err := vc.client.Logical().Write(v.path, map[string]interface{}{
+			"data": map[string]interface{}{
+				v.key: v.value,
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	testTable := []struct {
+		name       string
+		path       string
+		want       []string
+		vaultError error
+	}{
+		{"find three secrets in path", "test", []string{"test0", "test1", "test2"}, nil},
+		{"do not find any secrets in path", "test/123", []string{}, ErrSecretNotFound},
+	}
+
+	for _, tc := range testTable {
+		t.Run(tc.name, func(t *testing.T) {
+			secrets, err := vc.listSecret(tc.path)
+			if err != tc.vaultError {
+				t.Fatal(err)
+			}
+
+			if !reflect.DeepEqual(secrets, tc.want) {
+				assert.Equal(t, tc.want, secrets)
 			}
 		})
 	}
