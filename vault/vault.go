@@ -80,6 +80,9 @@ func (v *VaultClient) listSecret(path string) ([]string, error) {
 	if err != nil {
 		return []string{}, err
 	}
+	if secret == nil {
+		return []string{}, ErrSecretNotFound
+	}
 
 	list := []string{}
 	for _, v := range secret.Data[keys].([]interface{}) {
