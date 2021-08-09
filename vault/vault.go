@@ -1,6 +1,7 @@
 package vault
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/hashicorp/vault/api"
@@ -9,6 +10,10 @@ import (
 const (
 	data = "data"
 	keys = "keys"
+)
+
+var (
+	ErrSecretNotFound = errors.New("secret not found at given path")
 )
 
 // VaultClient is used to connect to the Vault API
@@ -51,6 +56,9 @@ func (v *VaultClient) readSecret(endpoint string) ([]string, error) {
 	secret, err := v.client.Logical().Read(endpoint)
 	if err != nil {
 		return []string{}, err
+	}
+	if secret == nil {
+		return []string{}, ErrSecretNotFound
 	}
 
 	list := []string{}
