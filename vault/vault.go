@@ -42,15 +42,6 @@ func NewVaultClient(engine string) (*VaultClient, error) {
 	}, nil
 }
 
-// func checkVaultErr(e error) error {
-// 	switch e {
-// 	case ErrSecretNotFound:
-// 		return nil
-// 	default:
-// 		return e
-// 	}
-// }
-
 // SearchPath loops over a given Vault path and searches for the secret
 // inside this path.
 func (v *VaultClient) SearchPath(path, secret string) error {
@@ -78,7 +69,6 @@ func (v *VaultClient) SearchPath(path, secret string) error {
 				pathQueue = append(pathQueue, _fullPath(path, q))
 				continue
 			}
-			// pathQueue = pathQueue[1:]
 
 			// if object, read the secret
 			secrets, err := v.readSecret(path + "/" + q)
