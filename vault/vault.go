@@ -2,6 +2,7 @@ package vault
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/hashicorp/vault/api"
@@ -13,7 +14,7 @@ const (
 )
 
 var (
-	ErrSecretNotFound = errors.New("secret not found at given path")
+	ErrSecretNotFound = errors.New("no secret not found at given path")
 )
 
 // VaultClient is used to connect to the Vault API
@@ -41,9 +42,60 @@ func NewVaultClient(engine string) (*VaultClient, error) {
 	}, nil
 }
 
+// func checkVaultErr(e error) error {
+// 	switch e {
+// 	case ErrSecretNotFound:
+// 		return nil
+// 	default:
+// 		return e
+// 	}
+// }
+
 // SearchPath loops over a given Vault path and searches for the secret
 // inside this path.
 func (v *VaultClient) SearchPath(path, secret string) error {
+	pathQueue := []string{path}
+
+	// continue looping over the path until you reach no more "/" suffixes
+	for len(pathQueue) > 0 {
+		path := pathQueue[0]
+
+		// list all secrest in the path
+		vals, err := v.listSecret(path)
+		if err != nil {
+			return err
+		}
+
+		// look at the secret and determine if it's another path
+		// or an object that can be read
+		for i, q := range vals {
+			if i+1 == len(vals) {
+				pathQueue = pathQueue[1:]
+			}
+
+			if strings.HasSuffix(q, "/") {
+				// you must append the FULL path
+				pathQueue = append(pathQueue, _fullPath(path, q))
+				continue
+			}
+			// pathQueue = pathQueue[1:]
+
+			// if object, read the secret
+			secrets, err := v.readSecret(path + "/" + q)
+			if err != nil {
+				return err
+			}
+
+			for _, s := range secrets {
+				if s == secret {
+					fmt.Printf("Secret found at path [%s] for [%s]\n", path, q)
+					return nil
+				}
+			}
+		}
+	}
+
+	fmt.Printf("secret [%s] not found\n", secret)
 	return nil
 }
 
