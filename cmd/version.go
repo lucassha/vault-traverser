@@ -9,7 +9,7 @@ import (
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Output current versin of traverse",
+	Short: "Output current version of traverse",
 	Run:   printVersion,
 }
 
