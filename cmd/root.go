@@ -14,11 +14,13 @@ type flagOptions struct {
 	engine string
 }
 
-// var traverseFlag flagOptions
 var (
 	traverseFlag flagOptions
-	ErrNoPath    = errors.New("no path provided")
-	ErrNoSecret  = errors.New("no secret provided")
+)
+
+var (
+	ErrNoPath   = errors.New("no path provided")
+	ErrNoSecret = errors.New("no secret provided")
 )
 
 // rootCmd represents the base command when called without any subcommands
