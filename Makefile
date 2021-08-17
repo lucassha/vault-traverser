@@ -2,6 +2,14 @@ export ROOT_TOKEN := root
 export CONTAINER_NAME := vault-dev
 export VAULT_ADDR := http://0.0.0.0:8200
 
+GOARCH := amd64
+COMMIT := $(shell git rev-parse HEAD)
+LDFLAGS := "-X main.COMMIT=${COMMIT}"
+BINARY := traverse
+
+darwin:
+	GOOS=darwin GOARCH=${GOARCH} go build -ldflags ${LDFLAGS} -o ${BINARY}
+
 test:
 	go test -v ./...
 
@@ -25,3 +33,5 @@ write-secrets:
 # add in a sleep to make sure all vault spinup activities are finished before writing new secrets
 sleep:
 	sleep 5
+
+.PHONY: test spinup create-cluster write-secrets sleep
