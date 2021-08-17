@@ -6,6 +6,7 @@ package vault
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	kv "github.com/hashicorp/vault-plugin-secrets-kv"
 	"github.com/hashicorp/vault/api"
@@ -109,7 +110,7 @@ func TestReadandListSecrets(t *testing.T) {
 		kvEngine: "v2",
 	}
 
-	// write sample data into vault
+	// set up sample data to write into vault
 	testData := []struct {
 		path  string
 		key   string
@@ -120,6 +121,7 @@ func TestReadandListSecrets(t *testing.T) {
 		{"test/data/test2", "test_2_key", "test_2_data"},
 	}
 
+	// write k/v data pairs into vault
 	for _, v := range testData {
 		_, err := vc.client.Logical().Write(v.path, map[string]interface{}{
 			"data": map[string]interface{}{
@@ -129,6 +131,11 @@ func TestReadandListSecrets(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+
+		// time buffer required between each write
+		// https://github.com/hashicorp/terraform-provider-vault/issues/677#issuecomment-609116328
+		// Code 400: Errors: Upgrading from non-versioned to versioned data. This backend will be unavailable for a brief period and will resume service shortly.
+		time.Sleep(2 * time.Second)
 	}
 
 	t.Run("Read Secret Testing", func(t *testing.T) {
