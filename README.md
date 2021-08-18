@@ -11,7 +11,7 @@ A Makefile hosts the necessary components to spin up a test Vault server in Dock
 
 Spin up a test server: `make spinup`. This creates a Vault Dev server from the base Docker image and writes some sample secrets into the default Vault path `/secret`. 
 
-![Traverse Usage Example](https://github.com/lucassha/vault-traverser/blob/main/img/gihub_traverse.gif)
+![Traverse Usage Example](https://github.com/lucassha/vault-traverser/blob/main/img/github_traverse.gif)
 
 ### TODO
 - Add testing for SearchPath method in Vault package
