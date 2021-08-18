@@ -24,7 +24,7 @@ write-secrets:
 	vault kv put secret/aws/credentials AWS_ACCESS_KEY_ID=AKIA-123 AWS_SECRET_ACCESS_KEY=nahnahnah
 	vault kv put secret/team/team1/test/PD_TOKEN value=abcdef123456
 	vault kv put secret/team/team1/test/TWITTER_TOKEN value=pffffffffffft
-	vault kv put secret/team/team1/test/k8s/SERVICE_TOKEN value=2
+	vault kv put secret/team/team1/test/k8s/SERVICE_TOKEN value=test_service_token
 	vault kv put secret/team/team1/test/k8s/CA_DATA value=test_ca_data
 	vault kv put secret/team/team1/test/k8s/API_SERVER_URL value=localhost:8000
 	vault kv put secret/team/notrad/production/k8s/SERVICE_TOKEN value=nothingherebutitsprod
