@@ -2,6 +2,7 @@
 Walk a given Vault path to check if a secret exists in the given path.
 
 ![Testing](https://github.com/lucassha/vault-traverser/actions/workflows/test.yml/badge.svg)
+![Release](https://github.com/lucassha/vault-traverser/actions/workflows/push-release.yml/badge.svg)
 
 ### Installation
 
