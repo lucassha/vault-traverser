@@ -39,6 +39,5 @@ traverse --path containers/production --secret test_key
 
 ### TODO
 - Add testing for SearchPath method in Vault package
-- Add Terraform for S3 bucket
-- Deploy to Homebrew
 - Fully test kv v1
+- Add concurrent searching for multiple paths
